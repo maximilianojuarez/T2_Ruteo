@@ -1,0 +1,7 @@
+# Dependencias requeridas para ejecutar main.py y los scripts de análisis (Rúbrica TI2 - Criterio 6.0)
+numpy>=1.26.0
+scipy>=1.11.0
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+matplotlib>=3.8.0

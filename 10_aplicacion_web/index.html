@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resiliencia Red Troncal Chile - Terremoto M 8.8 Maule (Leaflet + pgRouting)</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-bg: #0f172a;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --green: #10b981;
+      --orange: #f59e0b;
+      --red: #ef4444;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+    #sidebar {
+      width: 445px;
+      min-width: 445px;
+      height: 100vh;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 15px;
+      gap: 12px;
+      z-index: 1000;
+    }
+    h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+    }
+    .subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .card-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 9px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .attr-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .metric-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+    .metric-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+    .metric-sub {
+      font-size: 0.7rem;
+      margin-top: 2px;
+      color: var(--muted);
+    }
+    .val-green { color: var(--green); }
+    .val-red { color: var(--red); }
+    .val-orange { color: var(--orange); }
+    .val-blue { color: var(--accent); }
+
+    .btn-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    button {
+      flex: 1;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 9px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    button.secondary {
+      background: #334155;
+    }
+    button.secondary:hover {
+      background: #475569;
+    }
+    button.active-mode {
+      background: #0284c7;
+      outline: 2px solid #38bdf8;
+    }
+    button.danger {
+      background: #dc2626;
+    }
+    button.danger:hover {
+      background: #b91c1c;
+    }
+
+    .control-group {
+      margin-top: 9px;
+      font-size: 0.8rem;
+    }
+    .control-group label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      color: #e2e8f0;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 0.79rem;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .checkbox-left {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .swatch {
+      width: 18px;
+      height: 4px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .badge-synth {
+      font-size: 0.65rem;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(245, 158, 11, 0.2);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .badge-orig {
+      font-size: 0.65rem;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .status-banner {
+      font-size: 0.75rem;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #bae6fd;
+      line-height: 1.35;
+    }
+    table.mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.73rem;
+      margin-top: 5px;
+    }
+    table.mini-table th, table.mini-table td {
+      padding: 4px 5px;
+      text-align: right;
+      border-bottom: 1px solid #1e293b;
+    }
+    table.mini-table th:first-child, table.mini-table td:first-child {
+      text-align: left;
+    }
+    table.mini-table th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    #map-wrapper {
+      flex: 1;
+      position: relative;
+      height: 100vh;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+      background: #0b2239;
+    }
+    .map-legend {
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.96);
+      color: #1e293b;
+      padding: 14px 16px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      z-index: 900;
+      min-width: 265px;
+      font-size: 0.82rem;
+    }
+    .map-legend h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 9px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #0f172a;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 6px 0;
+      font-weight: 500;
+    }
+    .legend-line {
+      width: 24px;
+      height: 4px;
+      border-radius: 2px;
+    }
+    .legend-footer {
+      margin-top: 9px;
+      padding-top: 7px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.76rem;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <aside id="sidebar">
+    <div>
+      <h1>Red Troncal de Chile &amp; Resiliencia Sísmica</h1>
+      <div class="subtitle">
+        Proyecto Yafún (SUBTEL SAIP Respuesta_T5610) • Sismo M 8.8 Maule (27F 2010)
+      </div>
+    </div>
+
+    <!-- Card 1: ATTR Antes y Después -->
+    <div class="card">
+      <div class="card-title">
+        <span>Indicadores ATTR (Antes vs. Después)</span>
+        <span id="badge-eval-mode" style="font-size:0.68rem;color:#94a3b8;">Monte Carlo (500 sims)</span>
+      </div>
+      <div class="attr-grid">
+        <div class="metric-box">
+          <div class="metric-label">ATTR Antes (23 Nodos Clave)</div>
+          <div class="metric-val val-blue" id="val-attr-strat-before">0.1423</div>
+          <div class="metric-sub">CLS, IXP/PIT, Data Centers</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">ATTR Después (23 Nodos)</div>
+          <div class="metric-val val-orange" id="val-attr-strat-after">0.0918</div>
+          <div class="metric-sub" id="sub-attr-strat-after">Caída: -35.47%</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">ATTR Antes (Backbone Centro-Sur)</div>
+          <div class="metric-val val-green" id="val-attr-before">1.0000</div>
+          <div class="metric-sub">133 nodos g&ge;3 (100%)</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">ATTR Después (Backbone)</div>
+          <div class="metric-val val-red" id="val-attr-after">0.4097</div>
+          <div class="metric-sub" id="sub-attr-after">Caída: -59.03%</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:0.74rem;color:#cbd5e1;display:flex;justify-content:space-between;">
+        <span>ATTR Global (367 nodos g&ge;3): <strong id="val-attr-global-pair">0.1851 &rarr; 0.1079 (-41.69%)</strong></span>
+      </div>
+      <div style="margin-top:4px;font-size:0.74rem;color:#cbd5e1;display:flex;justify-content:space-between;">
+        <span>Enlaces fallados: <strong id="val-failed-links" style="color:#f87171;">60.7 (promedio MC)</strong></span>
+        <span>Total: <strong>4,497 tramos</strong></span>
+      </div>
+    </div>
+
+    <!-- Card 2: Modo de Visualización y Distinción de Enlaces Sintéticos (Criterio 6.1) -->
+    <div class="card">
+      <div class="card-title">Capas y Distinción de Enlaces Sintéticos</div>
+      <div class="btn-row">
+        <button id="btn-color-layer" class="active-mode" onclick="setColorMode('layer')">
+          Por Tipo de Tramo (Leyenda)
+        </button>
+        <button id="btn-color-damage" class="secondary" onclick="setColorMode('damage')">
+          Daño Sísmico / Prob. Falla
+        </button>
+      </div>
+
+      <div class="control-group" style="margin-top:10px;">
+        <div class="checkbox-list">
+          <label class="checkbox-item">
+            <span class="checkbox-left">
+              <input type="checkbox" checked onchange="toggleLayerFilter('fibra_optica', this.checked)" />
+              <span class="swatch" style="background:#1b9e77;"></span>
+              Fibra Óptica (1,915 | 10,316 km)
+            </span>
+            <span class="badge-orig">Original SAIP</span>
+          </label>
+          <label class="checkbox-item">
+            <span class="checkbox-left">
+              <input type="checkbox" checked onchange="toggleLayerFilter('postacion_electrica', this.checked)" />
+              <span class="swatch" style="background:#d95f02;"></span>
+              Postación Eléctrica (1,213 | 6,712 km)
+            </span>
+            <span class="badge-synth">Sintético</span>
+          </label>
+          <label class="checkbox-item">
+            <span class="checkbox-left">
+              <input type="checkbox" checked onchange="toggleLayerFilter('camino_sin_postacion', this.checked)" />
+              <span class="swatch" style="background:#7570b3;"></span>
+              Camino s/Postación (1,165 | 8,108 km)
+            </span>
+            <span class="badge-synth">Sintético</span>
+          </label>
+          <label class="checkbox-item">
+            <span class="checkbox-left">
+              <input type="checkbox" checked onchange="toggleLayerFilter('trayecto_en_ferry', this.checked)" />
+              <span class="swatch" style="background:#e7298a;"></span>
+              Trayecto en Ferry (204 | 2,387 km)
+            </span>
+            <span class="badge-synth">Sintético</span>
+          </label>
+          <label class="checkbox-item">
+            <span class="checkbox-left">
+              <input type="checkbox" id="chk-dash-synthetic" checked onchange="toggleSyntheticDash(this.checked)" />
+              <span>Distinguir enlaces sintéticos con trazo punteado</span>
+            </span>
+          </label>
+          <label class="checkbox-item">
+            <span class="checkbox-left">
+              <input type="checkbox" checked onchange="toggleStrategicNodes(this.checked)" />
+              <span class="swatch" style="background:#facc15;height:9px;width:9px;border-radius:50%;border:1px solid #000;"></span>
+              23 Nodos Clave Estratégicos (CLS / IXP / DC)
+            </span>
+          </label>
+          <label class="checkbox-item">
+            <span class="checkbox-left">
+              <input type="checkbox" checked onchange="toggleKeyNodes(this.checked)" />
+              <span class="swatch" style="background:#38bdf8;height:7px;width:7px;border-radius:50%;"></span>
+              367 Nodos Topológicos (Grado &ge; 3)
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Simulador Interactivo del Terremoto M 8.8 -->
+    <div class="card">
+      <div class="card-title">Simulador de Falla y Recálculo ATTR</div>
+      <div class="control-group">
+        <label>
+          <span>Umbral de corte por Prob. Falla (&tau;):</span>
+          <strong id="lbl-threshold">0.25 (25%)</strong>
+        </label>
+        <input
+          type="range"
+          id="slider-threshold"
+          min="0.05"
+          max="0.75"
+          step="0.05"
+          value="0.25"
+          oninput="document.getElementById('lbl-threshold').innerText = parseFloat(this.value).toFixed(2) + ' (' + Math.round(this.value*100) + '%)'"
+        />
+      </div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button onclick="runSimulation('threshold')">Corte por Umbral (&tau;)</button>
+        <button class="danger" onclick="runSimulation('montecarlo')">Monte Carlo en Vivo</button>
+      </div>
+      <div class="btn-row">
+        <button class="secondary" onclick="resetToBaselineMC()">Restaurar Valores Esperados (Monte Carlo)</button>
+      </div>
+    </div>
+
+    <!-- Card 4: Resumen de Sensibilidad -->
+    <div class="card">
+      <div class="card-title">Sensibilidad por Umbral (&tau;)</div>
+      <table class="mini-table">
+        <thead>
+          <tr>
+            <th>Umbral &tau;</th>
+            <th>Rotos</th>
+            <th>ATTR 23 Nodos</th>
+            <th>ATTR Backbone</th>
+            <th>Caída BB</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-thresholds"></tbody>
+      </table>
+    </div>
+  </aside>
+
+  <main id="map-wrapper">
+    <div id="map"></div>
+    <div class="map-legend" id="legend-box"></div>
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script>
+    const map = L.map('map', {
+      center: [-35.8, -71.8],
+      zoom: 6,
+      preferCanvas: true
+    });
+
+    const osmStandard = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors | Proyecto Yafún SUBTEL',
+      maxZoom: 19
+    });
+
+    const esriOcean = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: 'Tiles &copy; Esri Ocean | Proyecto Yafún SUBTEL',
+        maxZoom: 16
+      }
+    );
+
+    const esriDarkGray = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: 'Tiles &copy; Esri | Proyecto Yafún SUBTEL',
+        maxZoom: 16
+      }
+    );
+
+    const esriWorldImagery = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: 'Tiles &copy; Esri | Proyecto Yafún SUBTEL',
+        maxZoom: 19
+      }
+    );
+
+    osmStandard.addTo(map);
+    L.control.layers(
+      {
+        'OpenStreetMap (Calles y Ciudades)': osmStandard,
+        'Esri Océano y Relieve (Estilo SUBTEL)': esriOcean,
+        'Esri Oscuro (Dark Canvas)': esriDarkGray,
+        'Esri Satelital': esriWorldImagery
+      },
+      null,
+      { position: 'topright' }
+    ).addTo(map);
+
+    let edgesData = null;
+    let nodesData = null;
+    let eqData = null;
+    let attrSummary = null;
+
+    let edgesLayerGroup = L.layerGroup().addTo(map);
+    let nodesLayerGroup = L.layerGroup().addTo(map);
+    let strategicNodesLayerGroup = L.layerGroup().addTo(map);
+    let eqLayerGroup = L.layerGroup().addTo(map);
+
+    let currentColorMode = 'layer';
+    let dashSyntheticLinks = true;
+    let activeLayerTypes = new Set([
+      'fibra_optica',
+      'postacion_electrica',
+      'camino_sin_postacion',
+      'trayecto_en_ferry'
+    ]);
+    let failedGidsSet = new Set();
+
+    function getDamageColor(prob) {
+      if (prob >= 0.50) return '#ef4444';
+      if (prob >= 0.25) return '#f97316';
+      if (prob >= 0.10) return '#eab308';
+      if (prob >= 0.02) return '#38bdf8';
+      return '#10b981';
+    }
+
+    function updateLegend() {
+      const box = document.getElementById('legend-box');
+      if (currentColorMode === 'layer') {
+        box.innerHTML = `
+          <h4>Red Troncal - Chile</h4>
+          <div class="legend-row"><span class="legend-line" style="background:#1b9e77;"></span> Fibra Óptica Existente (Original SAIP)</div>
+          <div class="legend-row"><span class="legend-line" style="background:#d95f02;border-bottom:2px dashed #d95f02;"></span> Postación Eléctrica (Sintético)</div>
+          <div class="legend-row"><span class="legend-line" style="background:#7570b3;border-bottom:2px dashed #7570b3;"></span> Camino sin Postación (Sintético)</div>
+          <div class="legend-row"><span class="legend-line" style="background:#e7298a;border-bottom:2px dashed #e7298a;"></span> Trayecto en Ferry (Sintético)</div>
+          <div class="legend-row"><span class="legend-line" style="background:#ff0000;height:5px;"></span> Enlace Cortado por Terremoto 8.8</div>
+          <div class="legend-footer">
+            Fibra SAIP: <strong>10,316.0 km</strong> (1,915 tramos)<br/>
+            Total con Sintéticos: <strong>27,523.1 km</strong> (4,497 tramos)
+          </div>
+        `;
+      } else {
+        box.innerHTML = `
+          <h4>Probabilidad de Falla Sísmica (M 8.8)</h4>
+          <div class="legend-row"><span class="legend-line" style="background:#ef4444;"></span> Crítico (&ge; 50%)</div>
+          <div class="legend-row"><span class="legend-line" style="background:#f97316;"></span> Alto (25% – 50%)</div>
+          <div class="legend-row"><span class="legend-line" style="background:#eab308;"></span> Moderado (10% – 25%)</div>
+          <div class="legend-row"><span class="legend-line" style="background:#38bdf8;"></span> Leve (2% – 10%)</div>
+          <div class="legend-row"><span class="legend-line" style="background:#10b981;"></span> Despreciable (&lt; 2%)</div>
+          <div class="legend-footer">
+            Trazo continuo: <strong>Fibra Original SAIP</strong><br/>
+            Trazo punteado: <strong>Enlace Sintético / Complementario</strong>
+          </div>
+        `;
+      }
+    }
+
+    function renderEdges() {
+      edgesLayerGroup.clearLayers();
+      if (!edgesData) return;
+
+      const geojsonLayer = L.geoJSON(edgesData, {
+        filter: (feature) => activeLayerTypes.has(feature.properties.tipo_tramo),
+        style: (feature) => {
+          const p = feature.properties;
+          const isFailed = failedGidsSet.has(p.gid);
+          if (isFailed) {
+            return {
+              color: '#ff0000',
+              weight: 4.0,
+              opacity: 0.98,
+              dashArray: '4, 4'
+            };
+          }
+          const color = currentColorMode === 'layer' ? p.color_capa : getDamageColor(p.prob_falla);
+          const isSynth = Boolean(p.es_sintetico);
+          const weight = !isSynth ? 2.8 : 2.1;
+          return {
+            color: color,
+            weight: currentColorMode === 'damage' && p.prob_falla >= 0.15 ? 3.4 : weight,
+            opacity: 0.9,
+            dashArray: (dashSyntheticLinks && isSynth) ? '5, 4' : null
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          const isFailed = failedGidsSet.has(p.gid);
+          const tipoOrigen = p.es_sintetico
+            ? '<span style="color:#d97706;font-weight:700;">Sintético / Complementario (Estudio ~28.000 km)</span>'
+            : '<span style="color:#059669;font-weight:700;">Fibra Óptica Original SAIP (~10.316 km)</span>';
+          layer.bindPopup(`
+            <div style="font-size:0.82rem;line-height:1.45;">
+              <strong>Tramo GID #${p.gid}</strong> (${p.nombre_capa})<br/>
+              <strong>Clasificación Datos:</strong> ${tipoOrigen}<br/>
+              <strong>Vértices Topología:</strong> ${p.source} &leftrightarrow; ${p.target}<br/>
+              <strong>Longitud:</strong> ${p.longitud_km.toFixed(2)} km<br/>
+              <strong>Dist. Epicentro:</strong> ${p.dist_epicentro_m.toFixed(0)} m (${p.dist_epicentro_km.toFixed(1)} km)<br/>
+              <strong>PGA Estimado:</strong> ${p.pga_g.toFixed(3)} g<br/>
+              <strong>Prob. Falla Operación:</strong> 0.00% (Por defecto)<br/>
+              <strong>Prob. Falla Terremoto 8.8:</strong> <strong>${(p.prob_falla * 100).toFixed(2)}%</strong> (${p.nivel_dano})<br/>
+              <strong>Estado Simulado:</strong> <span style="color:${isFailed ? '#dc2626' : '#16a34a'};font-weight:700;">
+                ${isFailed ? 'CORTADO POR SISMO' : 'OPERATIVO'}
+              </span>
+            </div>
+          `);
+        }
+      });
+      edgesLayerGroup.addLayer(geojsonLayer);
+    }
+
+    function renderNodes() {
+      nodesLayerGroup.clearLayers();
+      strategicNodesLayerGroup.clearLayers();
+      if (!nodesData) return;
+
+      // 1) 367 Nodos Clave Topológicos (grado >= 3)
+      const topoLayer = L.geoJSON(nodesData, {
+        filter: (f) => !f.properties.es_nodo_clave_estrategico,
+        pointToLayer: (feature, latlng) => {
+          const p = feature.properties;
+          const isCore = p.cnt >= 4;
+          return L.circleMarker(latlng, {
+            radius: isCore ? 4.8 : 3.5,
+            fillColor: isCore ? '#38bdf8' : '#0284c7',
+            color: '#0f172a',
+            weight: 1.0,
+            fillOpacity: 0.85
+          });
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          layer.bindPopup(`
+            <div style="font-size:0.81rem;line-height:1.45;">
+              <strong>Vértice Topológico #${p.id}</strong><br/>
+              <strong>Rol:</strong> ${p.rol_topologico}<br/>
+              <strong>Grado Nodal (cnt):</strong> ${p.cnt} enlaces<br/>
+              <strong>Componente Operación:</strong> #${p.componente} (${p.tamano_componente} vértices)<br/>
+              <strong>Dist. Epicentro:</strong> ${p.dist_epicentro_km} km
+            </div>
+          `);
+        }
+      });
+      nodesLayerGroup.addLayer(topoLayer);
+
+      // 2) 23 Nodos Clave Estratégicos (Aterrizajes Submarinos, IXP/PIT, Data Centers, Nodos Troncales)
+      const stratLayer = L.geoJSON(nodesData, {
+        filter: (f) => f.properties.es_nodo_clave_estrategico,
+        pointToLayer: (feature, latlng) => {
+          return L.circleMarker(latlng, {
+            radius: 7.5,
+            fillColor: '#facc15',
+            color: '#7c2d12',
+            weight: 2.2,
+            fillOpacity: 1.0
+          });
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          layer.bindTooltip(`<strong>${p.codigo_estrategico}</strong>: ${p.ciudad}`, {
+            direction: 'top',
+            offset: [0, -6]
+          });
+          layer.bindPopup(`
+            <div style="font-size:0.82rem;line-height:1.45;max-width:290px;">
+              <strong style="color:#b45309;font-size:0.9rem;">[${p.codigo_estrategico}] ${p.nombre_estrategico}</strong><br/>
+              <strong>Ubicación:</strong> ${p.ciudad}, Región ${p.region} (${p.lat.toFixed(3)}°, ${p.lon.toFixed(3)}°)<br/>
+              <strong>Vértice Topología:</strong> <code>#${p.id}</code> (Grado=${p.cnt}, Subred #${p.componente})<br/>
+              <strong>Categoría:</strong> ${p.categoria_infra}<br/>
+              <strong>Rol de Flujo:</strong> <span style="color:#0369a1;font-weight:700;">${p.rol_flujo}</span><br/>
+              <strong>Justificación:</strong> ${p.detalle_rol}<br/>
+              <strong>Fuente:</strong> <em>${p.fuente}</em><br/>
+              <hr style="margin:5px 0;border:none;border-top:1px solid #cbd5e1;"/>
+              <strong>Dist. Epicentro 8.8:</strong> ${p.dist_epicentro_km} km<br/>
+              <strong>Pares Estratégicos Alcanzables:</strong> Antes: <strong>${p.prob_conexion_santiago_antes}</strong> &rarr; Después (MC): <strong>${p.prob_conexion_santiago_despues}</strong> (Pérdida: <strong style="color:#dc2626;">-${p.perdida_conectividad_santiago_pct}%</strong>)
+            </div>
+          `);
+        }
+      });
+      strategicNodesLayerGroup.addLayer(stratLayer);
+    }
+
+    function renderEarthquake() {
+      eqLayerGroup.clearLayers();
+      if (!eqData) return;
+      const feat = eqData.features[0];
+      const [lon, lat, depth] = feat.geometry.coordinates;
+      const props = feat.properties;
+
+      const rings = [
+        { r: 50000, color: '#ef4444', label: '50 km (Zona Ruptura Severa - PGA ~0.40g)' },
+        { r: 100000, color: '#f97316', label: '100 km (Daño Alto - PGA ~0.27g)' },
+        { r: 200000, color: '#eab308', label: '200 km (Atenuación Regional - PGA ~0.12g)' }
+      ];
+      rings.forEach((ring) => {
+        L.circle([lat, lon], {
+          radius: ring.r,
+          color: ring.color,
+          weight: 1.4,
+          dashArray: '5, 5',
+          fillOpacity: 0.04
+        })
+          .bindTooltip(ring.label)
+          .addTo(eqLayerGroup);
+      });
+
+      const eqMarker = L.circleMarker([lat, lon], {
+        radius: 10,
+        fillColor: '#ef4444',
+        color: '#ffffff',
+        weight: 2.5,
+        fillOpacity: 1.0
+      }).addTo(eqLayerGroup);
+
+      eqMarker.bindPopup(`
+        <div style="font-size:0.84rem;line-height:1.45;">
+          <strong style="color:#dc2626;">${props.titulo}</strong><br/>
+          <strong>Magnitud:</strong> Mw ${props.magnitud} (${props.tipo_magnitud})<br/>
+          <strong>Epicentro:</strong> ${lat}°, ${lon}°<br/>
+          <strong>Profundidad:</strong> ${depth} km<br/>
+          <strong>Fecha UTC:</strong> ${props.fecha_utc}<br/>
+          <strong>ID Evento USGS:</strong> <code>${props.id_evento}</code>
+        </div>
+      `);
+    }
+
+    function setColorMode(mode) {
+      currentColorMode = mode;
+      document.getElementById('btn-color-layer').className = mode === 'layer' ? 'active-mode' : 'secondary';
+      document.getElementById('btn-color-damage').className = mode === 'damage' ? 'active-mode' : 'secondary';
+      updateLegend();
+      renderEdges();
+    }
+
+    function toggleLayerFilter(code, checked) {
+      if (checked) activeLayerTypes.add(code);
+      else activeLayerTypes.delete(code);
+      renderEdges();
+    }
+
+    function toggleSyntheticDash(checked) {
+      dashSyntheticLinks = checked;
+      renderEdges();
+    }
+
+    function toggleKeyNodes(checked) {
+      if (checked) map.addLayer(nodesLayerGroup);
+      else map.removeLayer(nodesLayerGroup);
+    }
+
+    function toggleStrategicNodes(checked) {
+      if (checked) map.addLayer(strategicNodesLayerGroup);
+      else map.removeLayer(strategicNodesLayerGroup);
+    }
+
+    async function runSimulation(mode) {
+      const tau = parseFloat(document.getElementById('slider-threshold').value);
+      const res = await fetch('/api/simular', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modo: mode, umbral: tau })
+      });
+      const data = await res.json();
+      failedGidsSet = new Set(data.enlaces_fallados_gids);
+
+      document.getElementById('badge-eval-mode').innerText =
+        mode === 'montecarlo' ? 'Sorteo Monte Carlo en Vivo' : `Corte Umbral τ >= ${tau.toFixed(2)}`;
+      document.getElementById('val-attr-strat-after').innerText = data.attr_estrategicos_despues.toFixed(4);
+      document.getElementById('sub-attr-strat-after').innerText = `Caída: -${data.caida_estrategicos_pct.toFixed(2)}%`;
+      document.getElementById('val-attr-after').innerText = data.attr_backbone_despues.toFixed(4);
+      document.getElementById('sub-attr-after').innerText = `Caída: -${data.caida_backbone_pct.toFixed(2)}%`;
+      document.getElementById('val-attr-global-pair').innerHTML =
+        `${data.attr_global_antes.toFixed(4)} &rarr; ${data.attr_global_despues.toFixed(4)} (-${data.caida_global_pct.toFixed(2)}%)`;
+      document.getElementById('val-failed-links').innerText = `${data.cantidad_enlaces_fallados} enlaces cortados`;
+
+      renderEdges();
+    }
+
+    function resetToBaselineMC() {
+      if (!attrSummary) return;
+      failedGidsSet.clear();
+      const s23 = attrSummary.post_sismo.nodos_estrategicos_chile;
+      const b3 = attrSummary.post_sismo.backbone_principal_grado3;
+      const g3 = attrSummary.post_sismo.red_global_grado3;
+      document.getElementById('badge-eval-mode').innerText = 'Monte Carlo (500 sims)';
+      document.getElementById('val-attr-strat-before').innerText = s23.attr_antes.toFixed(4);
+      document.getElementById('val-attr-strat-after').innerText = s23.attr_despues_esperado_mc.toFixed(4);
+      document.getElementById('sub-attr-strat-after').innerText = `Caída: -${s23.caida_porcentual.toFixed(2)}%`;
+      document.getElementById('val-attr-before').innerText = b3.attr_antes.toFixed(4);
+      document.getElementById('val-attr-after').innerText = b3.attr_despues_esperado_mc.toFixed(4);
+      document.getElementById('sub-attr-after').innerText = `Caída: -${b3.caida_porcentual.toFixed(2)}%`;
+      document.getElementById('val-attr-global-pair').innerHTML =
+        `${g3.attr_antes.toFixed(4)} &rarr; ${g3.attr_despues_esperado_mc.toFixed(4)} (-${g3.caida_porcentual.toFixed(2)}%)`;
+      document.getElementById('val-failed-links').innerText =
+        `${attrSummary.post_sismo.enlaces_fallados_promedio} (promedio MC)`;
+      renderEdges();
+    }
+
+    async function initApp() {
+      updateLegend();
+      const [rRed, rNodos, rSismo, rAttr] = await Promise.all([
+        fetch('/api/red').then((r) => r.json()),
+        fetch('/api/nodos-clave').then((r) => r.json()),
+        fetch('/api/sismo').then((r) => r.json()),
+        fetch('/api/attr').then((r) => r.json())
+      ]);
+      edgesData = rRed;
+      nodesData = rNodos;
+      eqData = rSismo;
+      attrSummary = rAttr;
+
+      const tbody = document.getElementById('tbody-thresholds');
+      tbody.innerHTML = '';
+      rAttr.post_sismo.analisis_por_umbral.forEach((row) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>&ge; ${row.umbral_prob_falla.toFixed(2)}</td>
+          <td>${row.enlaces_fallados}</td>
+          <td>${row.attr_estrategicos.toFixed(4)}</td>
+          <td><strong>${row.attr_backbone_grado3.toFixed(4)}</strong></td>
+          <td style="color:#f87171;">-${row.reduccion_backbone_pct.toFixed(1)}%</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      resetToBaselineMC();
+      renderEarthquake();
+      renderNodes();
+    }
+
+    initApp();
+  </script>
+</body>
+</html>

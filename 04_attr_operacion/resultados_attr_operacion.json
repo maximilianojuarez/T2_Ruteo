@@ -1,0 +1,159 @@
+{
+  "definicion_attr": "ATTR (All-Terminal / Average Two-Terminal Reliability): promedio, sobre todos los pares de nodos clave (u, v), de la probabilidad de que exista al menos una ruta operativa entre u y v.",
+  "referencia_bibliografica": "Ball, M. O. (1986), IEEE Trans. Reliability; Colbourn, C. J. (1987), The Combinatorics of Network Reliability; Sterbenz et al. (2010), Computer Networks.",
+  "total_vertices_topologia": 4556,
+  "total_enlaces_topologia": 4497,
+  "enlaces_fibra_original_saip": 1915,
+  "km_fibra_original_saip": 10316.09,
+  "enlaces_sinteticos_complementarios": 2582,
+  "km_sinteticos_complementarios": 17207.07,
+  "longitud_total_km": 27523.16,
+  "resumen_por_capa": {
+    "fibra_optica": {
+      "nombre": "Fibra Óptica Existente",
+      "tramos": 1915,
+      "longitud_km": 10316.09,
+      "color": "#1b9e77",
+      "es_sintetico": false,
+      "justificacion": "Trazado original de fibra óptica troncal detectada en archivo SAIP (~10.316 km)."
+    },
+    "postacion_electrica": {
+      "nombre": "Postación Eléctrica (Complementario/Sintético)",
+      "tramos": 1213,
+      "longitud_km": 6711.62,
+      "color": "#d95f02",
+      "es_sintetico": true,
+      "justificacion": "Enlace sintético/complementario sobre postación eléctrica aérea para dar continuidad a rutas troncales donde el SAIP no reporta fibra soterrada (~6.712 km)."
+    },
+    "camino_sin_postacion": {
+      "nombre": "Camino sin Postación (Complementario/Sintético)",
+      "tramos": 1165,
+      "longitud_km": 8108.34,
+      "color": "#7570b3",
+      "es_sintetico": true,
+      "justificacion": "Enlace sintético/complementario sobre faja vial fiscal para unir tramos troncales discontinuos (~8.108 km)."
+    },
+    "trayecto_en_ferry": {
+      "nombre": "Trayecto en Ferry (Complementario/Sintético)",
+      "tramos": 204,
+      "longitud_km": 2387.11,
+      "color": "#e7298a",
+      "es_sintetico": true,
+      "justificacion": "Enlace sintético marítimo/lacustre (ferry/cruce submarino austral) para conectar zonas insulares y Patagonia (~2.387 km)."
+    }
+  },
+  "desglose_subredes_nodos_estrategicos_operacion": [
+    {
+      "subred_id": 1,
+      "cantidad_nodos_clave": 7,
+      "pares_internos_conectados": 21,
+      "nodos": [
+        "Curicó (CUR-TRN, Vértice #451)",
+        "Talca (TAL-TRN, Vértice #253)",
+        "Chillán (CHI-TRN, Vértice #636)",
+        "Concepción (CCP-IXP, Vértice #70)",
+        "Los Ángeles (LAG-TRN, Vértice #680)",
+        "Temuco (ZCO-IXP, Vértice #230)",
+        "Valdivia (ZAL-TRN, Vértice #1851)"
+      ]
+    },
+    {
+      "subred_id": 2,
+      "cantidad_nodos_clave": 4,
+      "pares_internos_conectados": 6,
+      "nodos": [
+        "Arica (ARI-CLS, Vértice #817)",
+        "Calama (CJC-TRN, Vértice #189)",
+        "Antofagasta (ANF-IXP, Vértice #24)",
+        "Iquique (IQQ-TRN, Vértice #1321)"
+      ]
+    },
+    {
+      "subred_id": 3,
+      "cantidad_nodos_clave": 4,
+      "pares_internos_conectados": 6,
+      "nodos": [
+        "Osorno (ZOS-TRN, Vértice #659)",
+        "Puerto Montt (PMC-CLS, Vértice #661)",
+        "Coyhaique (GXQ-TRN, Vértice #64)",
+        "Castro (CCH-CLS, Vértice #667)"
+      ]
+    },
+    {
+      "subred_id": 4,
+      "cantidad_nodos_clave": 3,
+      "pares_internos_conectados": 3,
+      "nodos": [
+        "La Serena (LSC-DC, Vértice #574)",
+        "Quilicura (Santiago) (SCL-DC, Vértice #96)",
+        "Santiago (SCL-IXP, Vértice #374)"
+      ]
+    },
+    {
+      "subred_id": 5,
+      "cantidad_nodos_clave": 1,
+      "pares_internos_conectados": 0,
+      "nodos": [
+        "Copiapó (CPO-TRN, Vértice #1632)"
+      ]
+    },
+    {
+      "subred_id": 6,
+      "cantidad_nodos_clave": 1,
+      "pares_internos_conectados": 0,
+      "nodos": [
+        "Valparaíso (VAP-CLS, Vértice #608)"
+      ]
+    },
+    {
+      "subred_id": 7,
+      "cantidad_nodos_clave": 1,
+      "pares_internos_conectados": 0,
+      "nodos": [
+        "Los Andes (AND-INT, Vértice #192)"
+      ]
+    },
+    {
+      "subred_id": 8,
+      "cantidad_nodos_clave": 1,
+      "pares_internos_conectados": 0,
+      "nodos": [
+        "Rancagua (RCG-TRN, Vértice #614)"
+      ]
+    },
+    {
+      "subred_id": 9,
+      "cantidad_nodos_clave": 1,
+      "pares_internos_conectados": 0,
+      "nodos": [
+        "Punta Arenas (PUQ-CLS, Vértice #1907)"
+      ]
+    }
+  ],
+  "metricas_attr_operacion": {
+    "nodos_estrategicos_chile_23": {
+      "descripcion": "23 Nodos Clave Estratégicos de Chile (Aterrizajes Submarinos, IXP/PIT, Data Centers y Nodos Troncales Regionales)",
+      "cantidad_nodos_clave": 23,
+      "pares_conectados": 36,
+      "pares_totales": 253,
+      "subredes_desconectadas": 9,
+      "attr_operacion": 0.142292,
+      "attr_solo_fibra_sin_sinteticos": 0.027668
+    },
+    "backbone_principal_grado_3_mas": {
+      "descripcion": "Nodos clave topológicos (grado >= 3) pertenecientes al corredor troncal principal conectado",
+      "cantidad_nodos_clave": 133,
+      "pares_conectados": 8778,
+      "pares_totales": 8778,
+      "attr_operacion": 1.0
+    },
+    "global_pais_grado_3_mas": {
+      "descripcion": "Todos los nodos clave topológicos (grado >= 3) del país incluyendo subredes/islas desconectadas en los shapefiles",
+      "cantidad_nodos_clave": 367,
+      "pares_conectados": 12429,
+      "pares_totales": 67161,
+      "componentes_con_nodos_clave": 28,
+      "attr_operacion": 0.185063
+    }
+  }
+}

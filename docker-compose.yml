@@ -1,0 +1,17 @@
+services:
+  postgis_pgrouting:
+    image: pgrouting/pgrouting:latest
+    container_name: ruteo_chile_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ruteo_chile
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./main.sql:/docker-entrypoint-initdb.d/01_main.sql:ro
+      - pgdata_ruteo_chile:/var/lib/postgresql/data
+
+volumes:
+  pgdata_ruteo_chile:
